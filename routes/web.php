@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\Admin\ItemController as AdminItemController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -12,6 +13,10 @@ Route::get('/', function () {
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
+});
+
+Route::middleware(['auth', 'can:admin'])->group(function () {
+    Route::resource('/admin/items', AdminItemController::class)->only(['index','store','update','destroy']);
 });
 
 Route::get('/dashboard', function () {

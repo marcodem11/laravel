@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role', // <- aggiunto
     ];
 
     /**
@@ -44,5 +45,13 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Relazione: un utente ha molte richieste
+     */
+    public function requests()
+    {
+        return $this->hasMany(ItemRequest::class);
     }
 }
