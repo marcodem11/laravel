@@ -38,6 +38,9 @@ const showingNavigationDropdown = ref(false);
                                 <NavLink :href="route('requests.mine')" :active="route().current('requests.mine')">
                                     Le mie richieste
                                 </NavLink>
+                                <NavLink :href="route('reservations.mine')" :active="route().current('reservations.mine')">
+                                    Le mie prenotazioni
+                                </NavLink>
                                 <NavLink :href="route('requests.create')" :active="route().current('requests.create')">
                                     Nuova richiesta
                                 </NavLink>

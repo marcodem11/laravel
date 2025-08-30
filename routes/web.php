@@ -7,6 +7,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\ItemController as AdminItemController;
 use App\Http\Controllers\ItemRequestController;
 use App\Http\Controllers\Admin\ItemRequestApprovalController as AdminReqController;
+use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,9 +26,9 @@ Route::get('/', function () {
 | Dashboard
 |--------------------------------------------------------------------------
 */
-Route::get('/dashboard', function () {
-    return inertia('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +66,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/requests', [ItemRequestController::class, 'index'])->name('requests.mine');
     Route::get('/requests/create', [ItemRequestController::class, 'create'])->name('requests.create');
     Route::post('/requests', [ItemRequestController::class, 'store'])->name('requests.store');
+
+    Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.mine');
 });
 
 require __DIR__.'/auth.php';

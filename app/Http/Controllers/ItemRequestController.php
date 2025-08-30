@@ -27,6 +27,7 @@ class ItemRequestController extends Controller
                 ->with('category')
                 ->orderBy('name')
                 ->get(),
+            'prefillItemId' => request()->integer('item_id') ?: null,
         ]);
     }
 
