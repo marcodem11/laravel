@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ItemRequest;
 use App\Models\Item;
+use App\Services\AvailabilityService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -22,26 +23,37 @@ class ItemRequestController extends Controller
     public function create()
     {
         return Inertia::render('Requests/Create', [
-            'items' => Item::where('status','available')->with('category')->orderBy('name')->get(),
+            'items' => Item::where('status', 'available')
+                ->with('category')
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 
-    public function store(Request $r)
+    public function store(Request $r, AvailabilityService $availability)
     {
         $data = $r->validate([
-            'type'         => 'required|in:inventory,to-buy',
-            'item_id'      => 'nullable|exists:items,id',
-            'quantity'     => 'required|integer|min:1',
-            'start_date'   => 'nullable|date',
-            'end_date'     => 'nullable|date|after_or_equal:start_date',
-            'note'         => 'nullable|string|max:1000',
+            'type'       => 'required|in:inventory,to-buy',
+            'item_id'    => 'nullable|exists:items,id',
+            'quantity'   => 'required|integer|min:1',
+            'start_date' => 'nullable|date',
+            'end_date'   => 'nullable|date|after_or_equal:start_date',
+            'note'       => 'nullable|string|max:1000',
         ]);
 
-        // regole minime: se inventory servono item e date
         if ($data['type'] === 'inventory') {
-            abort_unless(isset($data['item_id'], $data['start_date'], $data['end_date']), 422, 'Dati incompleti');
+            // per richieste di inventario: item, start_date ed end_date sono obbligatori
+            abort_unless(
+                isset($data['item_id'], $data['start_date'], $data['end_date']),
+                422,
+                'Per le richieste inventario devi selezionare item e date'
+            );
+
+            // ✅ Pre-check disponibilità (anti-overlap): feedback immediato all’utente
+            $item = Item::findOrFail($data['item_id']);
+            $availability->ensureAvailable($item, $data['start_date'], $data['end_date'], (int) $data['quantity']);
         } else {
-            // to-buy: non associare item/date
+            // richieste "to-buy": niente item né date
             $data['item_id'] = null;
             $data['start_date'] = null;
             $data['end_date'] = null;
@@ -52,6 +64,6 @@ class ItemRequestController extends Controller
 
         ItemRequest::create($data);
 
-        return redirect()->route('requests.mine')->with('success','Richiesta inviata');
+        return redirect()->route('requests.mine')->with('success', 'Richiesta inviata');
     }
 }
