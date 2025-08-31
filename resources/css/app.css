@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* --- Dark UI utilities --- */
+@layer components {
+  /* Buttons */
+  .btn { @apply inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm transition;
+         @apply border border-neutral-700 bg-neutral-900 text-neutral-200 hover:bg-neutral-800; }
+  .btn-primary { @apply bg-indigo-600 text-white border-transparent hover:bg-indigo-500; }
+  .btn-outline { @apply bg-transparent text-neutral-200 hover:bg-neutral-800; }
+  .btn-ghost { @apply bg-transparent border-transparent text-neutral-300 hover:bg-neutral-800; }
+
+  /* Badges */
+  .badge { @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium; }
+  .badge-success { @apply bg-emerald-900/30 text-emerald-300; }
+  .badge-warning { @apply bg-yellow-900/30 text-yellow-300; }
+  .badge-muted   { @apply bg-neutral-800 text-neutral-300; }
+
+  /* Cards */
+  .card      { @apply rounded-2xl border border-neutral-800 bg-neutral-950/60 shadow-sm; }
+  .card-body { @apply p-4 sm:p-6; }
+  .card-title{ @apply text-neutral-200 font-semibold; }
+
+  /* Tables */
+  .table-base       { @apply w-full text-sm border border-neutral-800; }
+  .table-base thead { @apply bg-neutral-900 text-neutral-200; }
+  .table-base th,
+  .table-base td    { @apply p-2 border-t border-neutral-800; }
+  .table-base th    { @apply text-left font-medium; }
+  .table-muted      { @apply text-neutral-400; }
+
+  /* Inputs */
+  .input { @apply rounded-lg w-full border border-neutral-700 bg-neutral-900 text-neutral-100
+                   placeholder-neutral-500 px-3 py-2 outline-none
+                   focus:border-neutral-500 focus:ring-1 focus:ring-neutral-600; }
+
+  /* Select & date/number share same base */
+  select.input, input[type="date"].input, input[type="number"].input { @apply pr-8; }
+
+  /* Links */
+  .link { @apply underline text-neutral-200 hover:text-white; }
+}
