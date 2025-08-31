@@ -2,55 +2,53 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Category;
 use App\Models\Item;
+use Illuminate\Console\Command;
 
 class ItemsCreateCommand extends Command
 {
-    /**
-     * Nome e firma del comando.
-     */
-    protected $signature = 'items:create 
-                            {name : Nome dell\'item} 
-                            {--category= : Nome della categoria} 
-                            {--qty=1 : Quantità disponibile} 
-                            {--status=available : Stato (available|unavailable)} 
-                            {--desc= : Descrizione opzionale}';
+    protected $signature = 'items:create
+        {--name= : Nome dell\'item}
+        {--category= : ID o nome categoria}
+        {--quantity=1 : Quantità iniziale}
+        {--status=available : available|unavailable}
+        {--description= : Descrizione opzionale}';
 
-    /**
-     * Descrizione del comando.
-     */
-    protected $description = 'Crea un nuovo item nell\'inventario';
+    protected $description = 'Crea rapidamente un item di inventario';
 
-    /**
-     * Esecuzione comando.
-     */
-    public function handle()
+    public function handle(): int
     {
-        $name     = $this->argument('name');
-        $categoryName = $this->option('category');
-        $qty      = (int) $this->option('qty');
-        $status   = $this->option('status');
-        $desc     = $this->option('desc');
+        $name = (string) $this->option('name');
+        $cat  = $this->option('category');
+        $qty  = (int) $this->option('quantity');
+        $status = (string) $this->option('status');
+        $desc = $this->option('description');
 
-        // Trova o crea categoria
-        $category = null;
-        if ($categoryName) {
-            $category = Category::firstOrCreate(['name' => $categoryName]);
+        if ($name === '' || $cat === null) {
+            $this->error(' --name e --category sono obbligatori');
+            return self::FAILURE;
         }
 
-        // Crea l'item
+        // categoria: accetta ID o nome
+        $category = is_numeric($cat)
+            ? Category::find((int)$cat)
+            : Category::firstOrCreate(['name' => (string)$cat]);
+
+        if (!$category) {
+            $this->error('Categoria non trovata');
+            return self::FAILURE;
+        }
+
         $item = Item::create([
             'name'        => $name,
-            'category_id' => $category?->id,
+            'category_id' => $category->id,
             'quantity'    => $qty,
             'status'      => $status,
             'description' => $desc,
         ]);
 
-        $this->info("✅ Item creato: {$item->name} (Qty: {$item->quantity}, Status: {$item->status})");
-
-        return Command::SUCCESS;
+        $this->info("Creato item #{$item->id} {$item->name} ({$category->name})");
+        return self::SUCCESS;
     }
 }

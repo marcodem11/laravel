@@ -1,61 +1,247 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Inventory & Reservation — Coding Challenge
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Gestione inventario aziendale con richieste utenti e approvazioni admin.  
+Stack: **Laravel 12**, **Breeze (Inertia + Vue 3)**, **Vite**, **SQLite**.  
+Include: autenticazione, ruoli, CRUD inventario, richieste *inventory* / *to-buy*, controllo disponibilità per periodo, dashboard KPI, command CLI, seed demo, test unit/feature.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Table of contents
+- [Prerequisiti](#prerequisiti)
+- [Setup veloce (5 step)](#setup-veloce-5-step)
+- [Credenziali demo](#credenziali-demo)
+- [Script utili](#script-utili)
+- [Cosa fa l’app (overview funzionale)](#cosa-fa-lapp-overview-funzionale)
+- [Modello dati](#modello-dati)
+- [Regole di business: disponibilità](#regole-di-business-disponibilità)
+- [Rotte principali](#rotte-principali)
+- [Ruoli e permessi](#ruoli-e-permessi)
+- [Seeder & dati demo](#seeder--dati-demo)
+- [Test](#test)
+- [Configurazione (.env) — SQLite di default](#configurazione-env--sqlite-di-default)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Prerequisiti
+- PHP **8.2+**
+- Composer **2+**
+- Node **18+** (o 20+) e npm
+- Estensione **pdo_sqlite** abilitata (per DB di default)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Setup veloce (5 step)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+# 1) dipendenze
+composer install
+npm install
 
-## Laravel Sponsors
+# 2) env + app key
+cp .env.example .env
+php artisan key:generate
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# 3) DB SQLite (default del progetto)
+mkdir -p database
+touch database/database.sqlite
 
-### Premium Partners
+# 4) migrazioni + seed demo
+php artisan migrate --seed
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# 5) avviare backend e frontend
+php artisan serve
+npm run dev
+```
 
-## Contributing
+- Backend: http://127.0.0.1:8000
+- Frontend (Vite dev server): http://127.0.0.1:5173 (gestito automaticamente da Breeze/Vite)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+⸻
 
-## Code of Conduct
+## Credenziali demo
+- Admin: admin@company.com / password
+- User demo: john.doe@company.com / password
+- User demo: jane.smith@company.com / password
+(+ altri utenti generati con password password)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Script utili
 
-## Security Vulnerabilities
+``` bash
+# sviluppo
+npm run dev          # Vite con HMR
+php artisan serve    # server PHP locale
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# dati demo
+php artisan migrate:fresh --seed
 
-## License
+# test
+php artisan test
+php artisan test --parallel
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# build
+npm run build
+```
+
+## Cosa fa l’app (overview funzionale)
+- Autenticazione (Laravel Breeze: login, registrazione, profilo).
+- Ruoli: admin e user.
+- Catalogo (user): lista Items disponibili, filtri & ricerca (nome/categoria/stato), pulsante Richiedi che porta al form con l’item pre-selezionato.
+- Richieste utente (user):
+- Inventory: item, quantità, periodo (data inizio/fine).
+- To-buy: richiesta di acquisto (solo note + qty, nessun item/periodo).
+- Pagina Le mie richieste con stato pending/approved/rejected.
+- Pagina Le mie prenotazioni (se approvate, vedi la reservation).
+- Inventario (admin):
+- CRUD Items (create, edit inline, delete).
+- Categorie collegate.
+- Approvals (admin):
+- Lista Richieste utenti, approva/rifiuta.
+- In approvazione, per inventory si crea una Reservation se c’è stock per quel periodo.
+- Dashboard Admin: KPI (totali, richieste pending), top item richiesto, utente più attivo, filtro periodo.
+- Comando CLI: items:create per inserire rapidamente un item.
+- Flash messages UI per success/error.
+
+### Modello dati
+- users: name, email, password, role (admin/user)
+- categories: name
+- items: name, category_id, quantity, status (available/unavailable), description
+- item_requests: user_id, type (inventory/to-buy), item_id?, quantity, start_date?, end_date?, note?, status (pending/approved/rejected)
+- reservations: item_request_id, item_id, start_date, end_date, quantity
+
+### Relazioni chiave:
+- Item belongsTo Category
+- ItemRequest belongsTo User e optionally belongsTo Item
+- Reservation belongsTo ItemRequest e Item
+
+Indici principali su reservations: item_id, start_date, end_date (per query su periodi).
+
+### Regole di business: disponibilità
+
+Al momento dell’approvazione di una richiesta inventory:
+- Calcoliamo la disponibilità di un Item nel periodo richiesto sottraendo la somma delle Reservation esistenti che si sovrappongono alle date.
+- Se available >= requested_quantity → approve & create reservation; altrimenti reject.
+
+Logica implementata in App\Services\AvailabilityService (testata con unit test).
+
+## Rotte principali
+
+```bash
+GET  /                  → redirect a /login o /dashboard
+GET  /dashboard         → dashboard utente/admin (Inertia)
+
+# Area utente (auth)
+GET  /requests          → mie richieste
+GET  /requests/create   → nuova richiesta (inventory/to-buy)
+POST /requests          → salva richiesta
+GET  /reservations      → mie prenotazioni
+
+# Area admin (auth + can:admin)
+GET    /admin/items           → inventario (lista + create + edit inline + delete)
+POST   /admin/items
+PUT    /admin/items/{id}
+DELETE /admin/items/{id}
+
+GET  /admin/requests          → richieste utenti
+POST /admin/requests/{id}/approve
+POST /admin/requests/{id}/reject
+```
+
+## Ruoli e permessi
+- role nel modello User.
+- Gate admin (policy semplice) → middleware can:admin per /admin/*.
+- Navbar e dashboard cambiano dinamicamente in base al ruolo (voci admin visibili solo a admin).
+
+## Seeder & dati demo
+
+I seed creano:
+- Admin fisso (admin@company.com/password),
+- 2 utenti fissi (john.doe@company.com, jane.smith@company.com, password password),
+- Categorie (Laptops, Monitors, Smartphones, Peripherals, Accessories),
+- Items realistici (es. MacBook Pro 16”, Dell XPS 13, LG UltraWide 34”, iPhone 16, Logitech MX Keys + extra),
+- Richieste utente eterogenee (inventory/to-buy). ~60% delle inventory vengono approvate creando reservation se c’è disponibilità.
+
+## Comandi:
+
+```bash
+php artisan migrate:fresh --seed        # reset + seed completo
+php artisan db:seed --class=DemoSeeder  # solo seed
+```
+
+## Creazione rapida di un item:
+
+```bash
+php artisan items:create \
+  --name="MacBook Pro 14\"" \
+  --category="Laptops" \
+  --quantity=3 \
+  --status=available \
+  --description="Notebook per sviluppo"
+```
+
+## Opzioni:
+- --name (obbl.)
+- --category (ID o nome; se nome non esiste, viene creato)
+- --quantity (default: 1)
+- --status (available|unavailable, default: available)
+- --description (opzionale)
+
+## Aiuto:
+
+```bash
+php artisan items:create -h
+```
+
+## Test
+
+Suite unit + feature/integration:
+- tests/Unit/AvailabilityServiceTest.php
+- calcolo disponibilità: no overlap, overlap, mai negativo.
+- tests/Feature/RequestApprovalFlowTest.php
+- user crea richiesta inventory → admin approva → reservation creata, status approved.
+- tests/Feature/ToBuyRequestTest.php
+- richiesta to-buy salvata, visibile in “Le mie richieste”, nessuna reservation.
+- tests/Feature/ItemsCreateCommandTest.php
+- verifica comando items:create.
+
+## Esecuzione:
+
+```bash
+php artisan test
+php artisan test --testsuite=Unit
+php artisan test --testsuite=Feature
+```
+
+## Configurazione (.env) — SQLite di default
+
+.env minimal per sviluppo SQLite:
+
+```bash
+APP_NAME="Inventory"
+APP_ENV=local
+APP_KEY=base64:... (generato da key:generate)
+APP_DEBUG=true
+APP_URL=http://localhost
+
+DB_CONNECTION=sqlite
+
+SESSION_DRIVER=database
+CACHE_STORE=database
+QUEUE_CONNECTION=database
+
+MAIL_MAILER=log
+```
+
+## Per MySQL, sostituisci:
+
+```bash
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=inventory
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+# Autore: Marco De Michele
+# Tech: Laravel 12, Breeze (Inertia + Vue 3), Vite, SQLite.
