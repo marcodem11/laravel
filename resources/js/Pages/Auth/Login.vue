@@ -70,14 +70,7 @@ const submit = () => {
                         <span class="ms-2 text-sm text-gray-600">Ricordami</span>
                     </label>
 
-                    <div class="flex items-center justify-between">
-                        <Link
-                            v-if="canResetPassword"
-                            :href="route('password.request')"
-                            class="text-sm underline text-gray-600 hover:text-gray-900"
-                        >
-                            Password dimenticata?
-                        </Link>
+                    <div class="flex items-center justify-end">
 
                         <PrimaryButton
                             class="btn btn-primary"

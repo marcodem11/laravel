@@ -85,7 +85,7 @@ const submit = () => {
                     <div class="flex items-center justify-between">
                         <Link
                             :href="route('login')"
-                            class="text-sm underline text-gray-600 hover:text-gray-900"
+                            class="text-sm underline text-gray-600 hover:text-gray-300"
                         >
                             Hai già un account?
                         </Link>
