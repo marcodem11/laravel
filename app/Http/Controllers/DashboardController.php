@@ -16,16 +16,13 @@ class DashboardController extends Controller
 {
     public function index(Request $r)
     {
-        $now = Carbon::now();
+        $now    = Carbon::now();
         $from30 = $now->copy()->subDays(30)->startOfDay();
 
-        $isAdmin = auth()->user()?->role === 'admin';
+        $isAdmin   = auth()->user()?->role === 'admin';
+        $myPending = ItemRequest::where('user_id', auth()->id())->where('status', 'pending')->count();
+        $myApproved= ItemRequest::where('user_id', auth()->id())->where('status', 'approved')->count();
 
-        // KPI utente
-        $myPending  = ItemRequest::where('user_id', auth()->id())->where('status', 'pending')->count();
-        $myApproved = ItemRequest::where('user_id', auth()->id())->where('status', 'approved')->count();
-
-        // KPI admin extra
         $adminKpi = null;
         if ($isAdmin) {
             $adminKpi = [
@@ -68,42 +65,31 @@ class DashboardController extends Controller
             ];
         }
 
-        // 📦 Catalogo (solo per utenti NON admin)
-        $catalog = null;
-        $categories = null;
-        $filters = null;
-
+        // Catalogo (solo utenti non admin)
+        $catalog = null; $categories = null; $filters = null;
         if (!$isAdmin) {
             $filters = [
                 'q'           => trim((string)$r->query('q', '')),
                 'category_id' => $r->query('category_id'),
-                'status'      => $r->query('status', 'available'), // default solo disponibili
+                'status'      => $r->query('status', 'available'),
             ];
 
             $q = Item::query()->with('category');
+            if ($filters['status'])      $q->where('status', $filters['status']);
+            if ($filters['category_id']) $q->where('category_id', $filters['category_id']);
+            if ($filters['q'] !== '')    $q->where('name', 'like', '%'.$filters['q'].'%');
 
-            if ($filters['status']) {
-                $q->where('status', $filters['status']);
-            }
-            if ($filters['category_id']) {
-                $q->where('category_id', $filters['category_id']);
-            }
-            if ($filters['q'] !== '') {
-                $q->where('name', 'like', '%'.$filters['q'].'%');
-            }
-
-            $catalog = $q->orderBy('name')->paginate(10)->withQueryString();
+            $catalog    = $q->orderBy('name')->paginate(10)->withQueryString();
             $categories = Category::orderBy('name')->get(['id','name']);
         }
 
         return Inertia::render('Dashboard', [
-            'isAdmin'  => $isAdmin,
-            'myKpi'    => ['pending'=>$myPending, 'approved'=>$myApproved],
-            'adminKpi' => $adminKpi,
-            // props per il widget Catalogo (solo user)
-            'catalog'     => $catalog,
-            'categories'  => $categories,
-            'filters'     => $filters,
+            'isAdmin'    => $isAdmin,
+            'myKpi'      => ['pending'=>$myPending, 'approved'=>$myApproved],
+            'adminKpi'   => $adminKpi,
+            'catalog'    => $catalog,
+            'categories' => $categories,
+            'filters'    => $filters,
         ]);
     }
 }

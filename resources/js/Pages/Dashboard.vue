@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { Link, usePage } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { Link, usePage, router } from '@inertiajs/vue3'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   isAdmin: Boolean,
@@ -13,8 +13,18 @@ const props = defineProps({
 })
 
 const user = usePage().props.auth.user
-
 const filters = computed(() => props.filters || { q:'', category_id:null, status:'available' })
+
+// Polling leggero: ricarica solo 'stats' e (se utente) 'catalog'
+const refresh = () => {
+  const only = ['myKpi', 'adminKpi']
+  if (!props.isAdmin) only.push('catalog')
+  router.reload({ only, preserveScroll: true })
+}
+
+let t
+onMounted(() => { t = setInterval(refresh, 10000) })
+onBeforeUnmount(() => clearInterval(t))
 </script>
 
 <template>
@@ -67,11 +77,7 @@ const filters = computed(() => props.filters || { q:'', category_id:null, status
 
         <!-- Filtri -->
         <form method="GET" action="/dashboard" class="flex flex-wrap gap-2">
-          <input
-            type="text" name="q" :value="filters.q"
-            placeholder="Cerca per nome..."
-            class="rounded border px-3 py-2"
-          />
+          <input type="text" name="q" :value="filters.q" placeholder="Cerca per nome..." class="rounded border px-3 py-2"/>
           <select name="category_id" :value="filters.category_id || ''" class="rounded border px-3 py-2">
             <option value="">Tutte le categorie</option>
             <option v-for="c in props.categories" :key="c.id" :value="c.id">{{ c.name }}</option>
@@ -98,7 +104,7 @@ const filters = computed(() => props.filters || { q:'', category_id:null, status
             <tbody>
               <tr v-for="it in props.catalog?.data || []" :key="it.id" class="border-t">
                 <td class="p-2">{{ it.name }}</td>
-                <td class="p-2">{{ it.category?.name ?? '-' }}</td>
+                <td class="p-2 text-center">{{ it.category?.name ?? '-' }}</td>
                 <td class="p-2 text-center">{{ it.quantity }}</td>
                 <td class="p-2 text-center">
                   <span :class="['px-2 py-1 rounded text-xs', it.status==='available' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700']">
@@ -124,7 +130,7 @@ const filters = computed(() => props.filters || { q:'', category_id:null, status
         </div>
       </div>
 
-      <!-- KPI Admin (già presenti sopra) -->
+      <!-- KPI Admin -->
       <div v-if="props.isAdmin" class="space-y-4">
         <h2 class="text-xl font-semibold">Statistiche (ultimi 30 giorni)</h2>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -5,6 +5,7 @@ import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import Flash from '@/Components/Flash.vue'; // 👈 aggiunto
 import { Link, usePage } from '@inertiajs/vue3'
 
 const user = usePage().props.auth.user;
@@ -164,6 +165,9 @@ const showingNavigationDropdown = ref(false);
                         </div>
                     </div>
                 </div>
+
+                <!-- 👇 aggiunto: toast di successo/errore -->
+                <Flash :flash="$page.props.flash" />
             </nav>
 
             <!-- Page Heading -->

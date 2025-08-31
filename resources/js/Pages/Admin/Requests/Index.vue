@@ -1,5 +1,6 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3'
+import { useForm, router } from '@inertiajs/vue3'
+import { onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   requests: Object // paginator with data = [{ id, user, type, item, note, start_date, end_date, quantity, status }]
@@ -8,16 +9,9 @@ const props = defineProps({
 const fmt = (d) => {
   if (!d) return '—'
   const date = new Date(d)
-  return new Intl.DateTimeFormat('it-IT', {
-    day: '2-digit', month: '2-digit', year: 'numeric'
-  }).format(date)
+  return new Intl.DateTimeFormat('it-IT', { day:'2-digit', month:'2-digit', year:'numeric' }).format(date)
 }
-
-const period = (r) => {
-  if (r.type !== 'inventory') return '—'
-  return `${fmt(r.start_date)} → ${fmt(r.end_date)}`
-}
-
+const period = (r) => r.type !== 'inventory' ? '—' : `${fmt(r.start_date)} → ${fmt(r.end_date)}`
 const statusClass = (s) => ({
   'px-2 py-1 rounded text-xs': true,
   'bg-yellow-100 text-yellow-800': s === 'pending',
@@ -25,16 +19,17 @@ const statusClass = (s) => ({
   'bg-red-100 text-red-700': s === 'rejected'
 })
 
-const approve = (id) => {
-  const f = useForm({})
-  f.post(route('admin.requests.approve', id), { preserveScroll: true })
+const approve = (id) => useForm({}).post(route('admin.requests.approve', id), { preserveScroll: true })
+const reject  = (id) => {
+  if (!confirm('Rifiutare questa richiesta?')) return
+  useForm({}).post(route('admin.requests.reject', id), { preserveScroll: true })
 }
 
-const reject = (id) => {
-  if (!confirm('Rifiutare questa richiesta?')) return
-  const f = useForm({})
-  f.post(route('admin.requests.reject', id), { preserveScroll: true })
-}
+// Polling leggero: ricarica solo 'requests' ogni 10s
+const refresh = () => router.reload({ only: ['requests'], preserveScroll: true })
+let t
+onMounted(() => { t = setInterval(refresh, 10000) })
+onBeforeUnmount(() => clearInterval(t))
 </script>
 
 <template>
